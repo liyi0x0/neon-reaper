@@ -19,7 +19,8 @@ fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(root, 'dist', 'neon-reaper.html'), html);
 
 const title = html.match(/<title>[\s\S]*?<\/title>/)[0];
-const links = (html.match(/<link [^>]*>/g) || []).join('\n');
+// the artifact host supplies its own tab icon, so leave ours out of that variant
+const links = (html.match(/<link [^>]*>/g) || []).filter((l) => !/rel="icon"/.test(l)).join('\n');
 const style = html.match(/<style>[\s\S]*?<\/style>/)[0];
 const body = html.match(/<body>([\s\S]*)<\/body>/)[1];
 const artifact = `${title}\n${links}\n${style}\n${body}`;
