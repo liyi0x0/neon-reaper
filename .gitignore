@@ -1,0 +1,4 @@
+.DS_Store
+node_modules/
+# Claude artifact variant of the build (no document skeleton)
+dist/artifact.html

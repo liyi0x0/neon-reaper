@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>霓虹收割者</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Monoton&family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+QingKe+HuangYou&display=swap">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<canvas id="gl" aria-label="游戏画面"></canvas>
+
+<div id="ui">
+  <!-- ================= HUD ================= -->
+  <div id="hud" hidden>
+    <div class="xp" aria-hidden="true">
+      <div class="xp-fill" id="xpFill"></div>
+    </div>
+    <div class="hud-row">
+      <div class="loadout">
+        <div class="lv-badge">LV <b id="lvNum">1</b></div>
+        <div class="slots" id="wSlots"></div>
+        <div class="slots slots-p" id="pSlots"></div>
+      </div>
+      <div class="clock">
+        <div class="time" id="time">00:00</div>
+        <div class="kills"><span class="kills-ico" id="killIco"></span><b id="kills">0</b></div>
+      </div>
+      <div class="hud-right">
+        <div class="gold" title="星币"><i></i><b id="gold">0</b></div>
+        <button class="icon-btn" id="btnPause" aria-label="暂停"></button>
+      </div>
+    </div>
+    <div class="boss" id="boss" hidden>
+      <div class="boss-name" id="bossName"></div>
+      <div class="boss-track"><div class="boss-fill" id="bossFill"></div></div>
+    </div>
+    <div class="combo" id="combo"><b id="comboNum">0</b><span>连斩</span></div>
+    <div class="fps" id="fps" hidden></div>
+  </div>
+
+  <div class="banner" id="banner" hidden><span id="bannerText"></span></div>
+  <div class="warning" id="warning" hidden>
+    <div class="warn-stripe"></div>
+    <div class="warn-core"><p class="warn-tag">WARNING</p><p class="warn-name" id="warnName"></p></div>
+    <div class="warn-stripe"></div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+
+  <!-- ================= TITLE ================= -->
+  <section class="screen title" id="scr-title">
+    <div class="title-veil"></div>
+    <div class="title-col">
+      <p class="eyebrow">十分钟 · 霓虹深渊生存</p>
+      <h1 class="logo">
+        <span class="logo-cn">霓虹收割者</span>
+        <span class="logo-en">NEON REAPER</span>
+      </h1>
+      <nav class="menu" aria-label="主菜单">
+        <button class="btn btn-primary" data-act="play"><span>开始收割</span><kbd>Enter</kbd></button>
+        <button class="btn" data-act="codex"><span>武器图鉴</span></button>
+        <button class="btn" data-act="settings"><span>设置</span></button>
+      </nav>
+      <p class="record" id="record"></p>
+    </div>
+    <p class="controls">WASD / 方向键 / 手柄 / 触屏拖动 移动 · 武器全自动攻击 · Esc 暂停</p>
+  </section>
+
+  <!-- ================= CHARACTER SELECT ================= -->
+  <section class="screen chars" id="scr-chars" hidden>
+    <header class="scr-head">
+      <p class="eyebrow">STEP 1 / 1</p>
+      <h2>选择收割者</h2>
+      <p class="scr-sub">每位收割者携带不同的起始武器与天赋</p>
+    </header>
+    <div class="char-grid" id="charGrid"></div>
+    <div class="scr-foot"><button class="btn btn-ghost" data-act="back"><span>返回</span><kbd>Esc</kbd></button></div>
+  </section>
+
+  <!-- ================= LEVEL UP ================= -->
+  <section class="screen levelup" id="scr-levelup" hidden>
+    <header class="lu-head">
+      <p class="eyebrow">LEVEL <b id="luLevel">2</b></p>
+      <h2>升级</h2>
+      <p class="scr-sub">选择一项强化 · 数字键 1–4</p>
+    </header>
+    <div class="cards" id="cards"></div>
+    <div class="lu-foot">
+      <button class="btn btn-ghost" id="btnReroll"><span>刷新选项</span><kbd id="rerollN">3</kbd></button>
+    </div>
+  </section>
+
+  <!-- ================= CHEST ================= -->
+  <section class="screen chest" id="scr-chest" hidden>
+    <div class="rays" aria-hidden="true"></div>
+    <div class="chest-stage">
+      <div class="chest-box" id="chestBox" aria-hidden="true"></div>
+      <div class="chest-body" id="chestBody"></div>
+      <button class="btn btn-primary" id="btnChest"><span>收下</span><kbd>Enter</kbd></button>
+    </div>
+  </section>
+
+  <!-- ================= PAUSE ================= -->
+  <section class="screen pause" id="scr-pause" hidden>
+    <div class="pause-wrap">
+      <div class="pause-menu">
+        <p class="eyebrow" id="pauseTime">00:00</p>
+        <h2>暂停</h2>
+        <nav class="menu" aria-label="暂停菜单">
+          <button class="btn btn-primary" data-act="resume"><span>继续</span><kbd>Esc</kbd></button>
+          <button class="btn" data-act="settings"><span>设置</span></button>
+          <button class="btn" data-act="restart"><span>重新开始</span></button>
+          <button class="btn btn-ghost" data-act="quit"><span>返回标题</span></button>
+        </nav>
+      </div>
+      <div class="panel build" id="build"></div>
+    </div>
+  </section>
+
+  <!-- ================= SETTINGS ================= -->
+  <section class="screen settings" id="scr-settings" hidden>
+    <div class="panel settings-panel">
+      <h2>设置</h2>
+      <div class="set-rows">
+        <label class="set-row" for="setMusic"><span>音乐音量</span><input type="range" id="setMusic" min="0" max="1" step="0.05"><output id="outMusic"></output></label>
+        <label class="set-row" for="setSfx"><span>音效音量</span><input type="range" id="setSfx" min="0" max="1" step="0.05"><output id="outSfx"></output></label>
+        <label class="set-row" for="setShake"><span>屏幕震动</span><input type="checkbox" class="toggle" id="setShake"></label>
+        <label class="set-row" for="setDmg"><span>伤害数字</span><input type="checkbox" class="toggle" id="setDmg"></label>
+        <div class="set-row"><span>画面质量</span>
+          <div class="seg" id="setQuality" role="group" aria-label="画面质量">
+            <button data-q="auto">自动</button><button data-q="high">高</button><button data-q="medium">中</button><button data-q="low">低</button>
+          </div>
+        </div>
+        <label class="set-row" for="setFps"><span>显示帧率</span><input type="checkbox" class="toggle" id="setFps"></label>
+      </div>
+      <div class="scr-foot"><button class="btn btn-primary" data-act="back"><span>完成</span><kbd>Esc</kbd></button></div>
+    </div>
+  </section>
+
+  <!-- ================= CODEX ================= -->
+  <section class="screen codex" id="scr-codex" hidden>
+    <header class="scr-head">
+      <p class="eyebrow">10 武器 · 10 进化 · 13 被动</p>
+      <h2>武器图鉴</h2>
+      <p class="scr-sub">武器升到 8 级，并持有对应被动，拾取宝箱即可进化</p>
+    </header>
+    <div class="codex-grid" id="codexGrid"></div>
+    <div class="scr-foot"><button class="btn btn-ghost" data-act="back"><span>返回</span><kbd>Esc</kbd></button></div>
+  </section>
+
+  <!-- ================= RESULTS ================= -->
+  <section class="screen results" id="scr-results" hidden>
+    <div class="panel results-panel">
+      <p class="eyebrow" id="resEyebrow"></p>
+      <h2 id="resTitle"></h2>
+      <div class="stats" id="resStats"></div>
+      <div class="table-wrap"><table class="dmg-table" id="resTable"></table></div>
+      <p class="record" id="resRecord"></p>
+      <div class="scr-foot">
+        <button class="btn btn-primary" data-act="again"><span>再来一局</span><kbd>Enter</kbd></button>
+        <button class="btn" data-act="endless" id="btnEndless" hidden><span>继续 · 无尽模式</span></button>
+        <button class="btn btn-ghost" data-act="title"><span>返回标题</span></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="gl-error" id="glError" hidden>
+    <h2>无法启动渲染器</h2>
+    <p>此游戏需要 WebGL2。请使用最新版 Chrome、Edge、Firefox 或 Safari 打开，并确认已开启硬件加速。</p>
+  </div>
+</div>
+
+<div class="joy" id="joy" hidden><div class="joy-ring"></div><div class="joy-knob" id="joyKnob"></div></div>
+
+<script src="src/util.js"></script>
+<script src="src/gl.js"></script>
+<script src="src/audio.js"></script>
+<script src="src/data.js"></script>
+<script src="src/world.js"></script>
+<script src="src/enemies.js"></script>
+<script src="src/weapons.js"></script>
+<script src="src/game.js"></script>
+<script src="src/ui.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
